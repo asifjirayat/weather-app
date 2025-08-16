@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🌤️ Weather App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🌤️ Weather App</h1>
+        <p>Get current weather for any city</p>
+      </header>
+
+      <main>
+        <!-- Search Section -->
+        <section class="search-section">
+          <div class="search-box">
+            <input
+              type="text"
+              id="cityInput"
+              placeholder="Enter city name..."
+              autocomplete="off"
+            />
+            <button id="searchBtn">Search</button>
+          </div>
+          <div class="recent-searches">
+            <h3>Recent Searches:</h3>
+            <div id="recentSearchesContainer"></div>
+          </div>
+        </section>
+
+        <!-- Weather Display -->
+        <section class="weather-display" id="weatherDisplay">
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Loading weather data...</p>
+          </div>
+
+          <div id="weatherContent" class="hidden">
+            <div class="weather-header">
+              <h2 id="cityName">City Name</h2>
+              <p id="locationInfo">Country, Region</p>
+            </div>
+
+            <div class="weather-main">
+              <div class="temperature">
+                <span id="temperature">0°C</span>
+              </div>
+              <div class="weather-icon">
+                <img id="weatherIcon" src="" alt="Weather icon" />
+              </div>
+              <div class="weather-description">
+                <p id="weatherDescription">Weather Description</p>
+              </div>
+            </div>
+
+            <div class="weather-details">
+              <div class="detail-item">
+                <span class="label">Feels Like:</span>
+                <span id="feelsLike">0°C</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Humidity:</span>
+                <span id="humidity">0%</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Wind Speed:</span>
+                <span id="windSpeed">0 km/h</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Pressure:</span>
+                <span id="pressure">0 mb</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Visibility:</span>
+                <span id="visibility">0 km</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">UV Index:</span>
+                <span id="uvIndex">0</span>
+              </div>
+            </div>
+
+            <div class="last-updated">
+              <p>Last updated: <span id="lastUpdated">-</span></p>
+            </div>
+          </div>
+
+          <div id="errorMessage" class="error hidden">
+            <h3>⚠️ Error</h3>
+            <p id="errorMessageText"></p>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <p>Powered by WeatherAPI • Made with Node.js & Express</p>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

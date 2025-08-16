@@ -2,9 +2,13 @@ require("dotenv").config();
 
 const express = require("express");
 const axios = require("axios");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Serve static files from public
+app.use(express.static(path.join(__dirname, "public")));
 
 // API Configuration
 const API_KEY = process.env.WEATHERAPI_KEY;
@@ -21,20 +25,11 @@ app.use(express.json());
 
 // Root route: "/"
 app.get("/", (req, res) => {
-  res.send(`
-    <h1>Weather App</h1>
-    <p>Available endpoints:</p>
-    <ul>
-    <li><a href="/weather/belgaum">/weather/belgaum</a></li>
-    <li><a href="/weather/dharwad">/weather/dharwad</a></li>
-    <li><a href="/weather/bangalore">/weather/bangalore</a></li>
-    <li><a href="/weather/panaji">/weather/panaji</a></li>
-    </ul>
-    `);
+  res.send(path.join(__dirname, "public", "index.html"));
 });
 
 // Weather endpoint
-app.get("/weather/:city", async (req, res) => {
+app.get("/api/weather/:city", async (req, res) => {
   try {
     const { city } = req.params;
 
