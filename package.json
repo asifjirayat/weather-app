@@ -1,15 +1,24 @@
 {
   "name": "weather-app",
   "version": "1.0.0",
-  "description": "A simple weather app built using OpenWeatherMap API",
+  "description": "A simple weather app built using 3rd party API",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",
+    "dev": "nodemon app.js"
   },
   "author": "Asif Jirayat",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.11.0",
     "express": "^5.1.0"
+  },
+  "keywords": [
+    "weather",
+    "nodejs",
+    "express"
+  ],
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }
