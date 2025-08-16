@@ -7,9 +7,6 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files from public
-app.use(express.static(path.join(__dirname, "public")));
-
 // API Configuration
 const API_KEY = process.env.WEATHERAPI_KEY;
 const BASE_URL = "http://api.weatherapi.com/v1/current.json";
@@ -23,9 +20,16 @@ app.use((req, res, next) => {
 // Middleware for JSON parsing
 app.use(express.json());
 
-// Root route: "/"
+// Serve static files from public directory
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    maxAge: "1d",
+  })
+);
+
+// Root route: "/" - serve the HTML file properly
 app.get("/", (req, res) => {
-  res.send(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // Weather endpoint
@@ -68,7 +72,7 @@ app.get("/api/weather/:city", async (req, res) => {
         name: data.location.name,
         country: data.location.country,
         region: data.location.region,
-        localTime: data.location.localTime,
+        localTime: data.location.localtime, // Fixed: was localTime
       },
       current: {
         temp_c: data.current.temp_c,
@@ -151,22 +155,26 @@ app.get("/api/weather/:city", async (req, res) => {
   }
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
-  res.status(500).json({
-    error: "Internal Server error",
-    message: "Something went wrong",
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    apiKeyConfigured: !!API_KEY,
   });
 });
 
-// 404 handler
+// Catch-all for undefined routes
 app.use((req, res) => {
-  res.status(404).json({
-    error: "Endpoint Not Found",
-    message: `The requested endpoint ${req.path} does not exisit`,
-    availableEndpoints: ["/", "/weather/:city"],
-  });
+  // If it's an API request, return 404
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({
+      error: "API Endpoint Not Found",
+      message: `The requested API endpoint ${req.path} does not exist`,
+    });
+  }
+  // Otherwise, serve the HTML (for SPA routing)
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.listen(PORT, () => {
