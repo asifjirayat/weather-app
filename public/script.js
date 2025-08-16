@@ -55,7 +55,22 @@ async function searchWeather() {
   showLoading();
 
   try {
+    // Make request to the backend API
     const response = await fetch(`/api/weather/${city}`);
+
+    // Check if response is ok (status 200-299)
+    if (!response.ok) {
+      // Try to parse error response
+      try {
+        const errorData = await response.json();
+        showError(errorData.error || "Failed to fetch weather data");
+      } catch (parseError) {
+        // If parsing fails, show generic error
+        showError(`HTTP Error: ${response.status} - ${response.statusText}`);
+      }
+      return;
+    }
+
     const data = await response.json();
 
     if (response.ok) {
@@ -67,7 +82,7 @@ async function searchWeather() {
     }
   } catch (error) {
     showError("Network error: Could not connect to weather service");
-    console.error("Error:", error);
+    console.error("Fetch error:", error);
   } finally {
     hideLoading();
   }
