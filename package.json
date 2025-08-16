@@ -2,7 +2,7 @@
   "name": "weather-app",
   "version": "1.0.0",
   "description": "A simple weather app built using 3rd party API",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js"
@@ -15,7 +15,7 @@
     "express": "^5.1.0"
   },
   "engines": {
-    "node": "21.x"
+    "node": "18.x"
   },
   "keywords": [
     "weather",
