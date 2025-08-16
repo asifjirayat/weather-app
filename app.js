@@ -1,60 +1,73 @@
+require("dotenv").config();
+
 const express = require("express");
-const fs = require("fs").promises;
-const path = require("path");
+const axios = require("axios");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Function to load weather data from JSON file
-const loadWeatherData = async () => {
-  console.log("Attempting to load weather data....");
-  try {
-    const data = await fs.readFile(
-      path.join(__dirname, "weather.json"),
-      "utf-8"
-    );
-    return JSON.parse(data);
-  } catch (error) {
-    console.error("Error loading weather data:", error);
-    return {};
-  }
-};
+// API Configuration
+const API_KEY = process.env.WEATHERAPI_KEY;
+const BASE_URL = "http://api.weatherapi.com/v1/current.json";
 
-// Global variable to store weather data
-let weatherData = {};
+// Middleware for logging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
-// IIFE to Load data when app starts
-(async () => {
-  weatherData = await loadWeatherData();
-  console.log(
-    `Loaded ${Object.keys(weatherData).length} cities from weather.json`
-  );
-})();
+// Middleware for JSON parsing
+app.use(express.json());
 
+// Root route: "/"
 app.get("/", (req, res) => {
   res.send(`
     <h1>Weather App</h1>
     <p>Available endpoints:</p>
     <ul>
-    <li><a href="/weather/mumbai">/weather/mumbai</a></li>
-    <li><a href="/weather/delhi">/weather/delhi</a></li>
-    <li><a href="/weather/london">/weather/london</a></li>
-    <li><a href="/cities">/cities</a></li>
+    <li><a href="/weather/belgaum">/weather/belgaum</a></li>
+    <li><a href="/weather/dharwad">/weather/dharwad</a></li>
+    <li><a href="/weather/bangalore">/weather/bangalore</a></li>
+    <li><a href="/weather/panaji">/weather/panaji</a></li>
     </ul>
     `);
 });
 
 // Weather endpoint
-app.get("/weather/:city", (req, res) => {
-  console.log("Weather request for:", req.params.city);
+app.get("/weather/:city", async (req, res) => {
+  try {
+    const { city } = req.params;
 
-  const { city } = req.params;
-  const cityLower = city.toLowerCase();
+    // Validate if city param is present
+    if (!city || city.trim() === "") {
+      return res.status(400).json({
+        error: "Bad request",
+        message: "City parameter is required",
+        example: "weather/mumbai",
+      });
+    }
 
-  // Check if data for city available
-  if (weatherData[cityLower]) {
-    const data = weatherData[cityLower];
-    console.log("Found weather data for city:", city);
+    // Check if API is configured
+    if (!API_KEY) {
+      return res.status(500).json({
+        error: "API KEY not configured",
+        message: "Please add your WeatherAPI to .env file",
+        help: "Add WEATHERAPI_KEY=your_actual_key to .env file",
+      });
+    }
+
+    // Make API request
+    const response = await axios.get(BASE_URL, {
+      params: {
+        key: API_KEY,
+        q: city,
+        aqi: "no",
+      },
+    });
+
+    const data = response.data;
+
+    // Return formatted data
     res.json({
       location: {
         name: data.location.name,
@@ -78,25 +91,90 @@ app.get("/weather/:city", (req, res) => {
         last_updated: data.current.last_updated,
       },
     });
-  } else {
-    console.log("City not found:", city);
-    res.status(404).json({
-      error: "City not found",
-      message: "City is not in our local database",
+  } catch (error) {
+    console.error("API Error:", error.message);
+
+    // Handle different type of errors
+    if (error.response) {
+      const { status, data } = error.response;
+
+      if (status === 400) {
+        return res.status(400).json({
+          error: "Invalid request",
+          message: "Invalid city name or request parameters",
+        });
+      }
+
+      if (status === 404) {
+        return res.status(404).json({
+          error: "City not found",
+          message: "City not found in WeatherAPI database",
+          city: req.params.city,
+          suggestion: "Try a different city name",
+        });
+      }
+      if (status === 401) {
+        return res.status(401).json({
+          error: "Unauthorized",
+          message: "Invalid WeatherAPI key",
+          help: "Check your API key in .env file",
+        });
+      }
+
+      // Other API errors
+      return res.status(status).json({
+        error: "API error",
+        message: data.error?.message || "Failed to fetch weather data",
+        status: status,
+      });
+    }
+
+    // Network errors or timeouts
+    if (error.code === "ECONNABORTED" || error.code === "ENOTFOUND") {
+      return res.status(503).json({
+        error: "Service unavailable",
+        message: "Could not connect to weather service",
+        help: "Please check your internet connection",
+      });
+    }
+
+    // General network errors
+    if (error.code === "ECONNREFUSED") {
+      return res.status(503).json({
+        error: "Connection refused",
+        message: "Weather service is not responding",
+        help: "Try again later",
+      });
+    }
+
+    // General error
+    res.status(500).json({
+      error: "Internal server error",
+      message: "Could not process your request",
+      details: error.message,
     });
   }
 });
 
-// List all cities
-app.get("/cities", (req, res) => {
-  const cities = Object.keys(weatherData);
-  console.log("Cities requested:", cities);
-  res.json({
-    cities: cities,
-    count: cities.length,
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({
+    error: "Internal Server error",
+    message: "Something went wrong",
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Endpoint Not Found",
+    message: `The requested endpoint ${req.path} does not exisit`,
+    availableEndpoints: ["/", "/weather/:city"],
   });
 });
 
 app.listen(PORT, () => {
   console.log("Weather app is running on http://localhost:", PORT);
+  console.log("API Key configured:", API_KEY ? "YES" : "NO");
 });
